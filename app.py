@@ -605,6 +605,28 @@ def get_all_bookings():
         if connection and connection.is_connected():
             connection.close()
 
+# Temporary Route to Initialize Database on Railway
+@app.route('/init-db')
+def init_database():
+    try:
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor()
+        
+        with open('schema.sql', 'r') as f:
+            schema = f.read()
+            
+        # Split by semicolon and execute each statement
+        for statement in schema.split(';'):
+            if statement.strip():
+                cursor.execute(statement)
+        
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return "Database initialized successfully! You can now use the app. (Please delete this route from app.py later for security)"
+    except Exception as e:
+        return f"Database initialization failed: {str(e)}"
+
 # Disable Browser Caching
 @app.after_request
 def add_header(response):
