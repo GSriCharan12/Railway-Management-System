@@ -11,6 +11,7 @@ import json
 
 # Load environment variables
 load_dotenv()
+SECRET_KEY = os.getenv('SECRET_KEY') or 'super_secret_railway_key_2024'
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app)
@@ -89,7 +90,7 @@ def token_required(f):
             return jsonify({'message': 'Token is missing!'}), 401
         try:
             token = token.split()[1]
-            data = jwt.decode(token, os.getenv('SECRET_KEY'), algorithms=["HS256"])
+            data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
             return f(*args, **kwargs)
         except:
             return jsonify({'message': 'Token is invalid!'}), 401
@@ -104,7 +105,7 @@ def admin_required(f):
             return jsonify({'message': 'Token is missing!'}), 401
         try:
             token = token.split()[1]
-            data = jwt.decode(token, os.getenv('SECRET_KEY'), algorithms=["HS256"])
+            data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
             # Check if the user is an admin
             if not data.get('is_admin', False):
                 return jsonify({'message': 'Admin access required!'}), 403
@@ -153,12 +154,11 @@ def admin_login():
                 pass # Continue even if DB fix fails, bypass is primary
             
             # Generate Token
-            secret = os.getenv('SECRET_KEY') or 'super_secret_railway_key_2024'
             token = jwt.encode({
                 'user': 'admin',
                 'is_admin': True,
                 'exp': datetime.utcnow() + timedelta(hours=24)
-            }, secret)
+            }, SECRET_KEY)
             return jsonify({'token': token, 'is_admin': True})
 
         # Regular database check for other admins
@@ -169,12 +169,11 @@ def admin_login():
         connection.close()
         
         if admin and bcrypt.checkpw(password.encode('utf-8'), admin['password'].encode('utf-8')):
-            secret = os.getenv('SECRET_KEY') or 'super_secret_railway_key_2024'
             token = jwt.encode({
                 'user': username,
                 'is_admin': True,
                 'exp': datetime.utcnow() + timedelta(hours=24)
-            }, secret)
+            }, SECRET_KEY)
             return jsonify({'token': token, 'is_admin': True})
         
         return jsonify({'message': 'Invalid credentials'}), 401
@@ -585,7 +584,7 @@ def get_all_bookings():
         cursor = connection.cursor(dictionary=True)
         
         query = """
-        SELECT b.booking_id, p.name as passenger_name, ts.train_name, 
+        SELECT b.booking_id, p.name as passenger_name, p.email, ts.train_name, 
                s1.station_name as source, s2.station_name as destination,
                t.travel_date, t.seat_number, py.amount
         FROM bookings b
