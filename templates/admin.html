@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard | Railway Express</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body class="bg-slate-950 text-slate-200 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+    <div class="fixed inset-0 z-0 pointer-events-none">
+        <div class="absolute top-[0%] right-[0%] w-[40%] h-[40%] bg-indigo-900/10 rounded-full blur-[120px]"></div>
+        <div class="absolute bottom-[0%] left-[0%] w-[40%] h-[40%] bg-violet-900/10 rounded-full blur-[120px]"></div>
+    </div>
+
+    <header class="fixed w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <span class="text-3xl">🚄</span>
+                <div>
+                    <h1
+                        class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-violet-400">
+                        Railway Express</h1>
+                    <span class="text-xs text-slate-500 uppercase tracking-wider font-semibold">Admin Panel</span>
+                </div>
+            </div>
+
+            <nav class="flex items-center gap-6">
+                <span class="text-sm font-medium text-slate-400">Welcome, Admin</span>
+                <button id="logoutBtn"
+                    class="px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500 hover:text-white transition-all text-sm font-medium">
+                    Logout
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow pt-28 px-4 pb-12 relative z-10 max-w-7xl mx-auto w-full">
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="glass p-6 rounded-xl border-l-4 border-indigo-500">
+                <h3 class="text-slate-500 text-xs font-bold uppercase tracking-widest">Total Bookings</h3>
+                <p class="text-3xl font-bold text-white mt-2" id="bookingCount">0</p>
+            </div>
+            <div class="glass p-6 rounded-xl border-l-4 border-emerald-500">
+                <h3 class="text-slate-500 text-xs font-bold uppercase tracking-widest">Total Revenue</h3>
+                <p class="text-3xl font-bold text-emerald-400 mt-2">₹<span id="totalRevenue">0</span></p>
+            </div>
+            <div class="glass p-6 rounded-xl border-l-4 border-amber-500">
+                <h3 class="text-slate-500 text-xs font-bold uppercase tracking-widest">Trains Active</h3>
+                <p class="text-3xl font-bold text-amber-400 mt-2" id="activeTrains">0</p>
+            </div>
+            <div class="glass p-6 rounded-xl border-l-4 border-rose-500">
+                <h3 class="text-slate-500 text-xs font-bold uppercase tracking-widest">Feedbacks</h3>
+                <p class="text-3xl font-bold text-rose-400 mt-2" id="feedbackCount">0</p>
+            </div>
+        </div>
+
+        <!-- Features Navigation -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+            <a href="livestatus.html" class="glass p-6 rounded-xl hover:bg-white/5 text-center transition group">
+                <div class="text-3xl mb-3 group-hover:scale-110 transition-transform">🚦</div>
+                <div class="font-bold text-indigo-300">Live Train Status</div>
+            </a>
+            <a href="pnrstatus.html" class="glass p-6 rounded-xl hover:bg-white/5 text-center transition group">
+                <div class="text-3xl mb-3 group-hover:scale-110 transition-transform">🔍</div>
+                <div class="font-bold text-indigo-300">PNR Status</div>
+            </a>
+            <!-- Add New Train Button -->
+            <button onclick="openTrainModal()"
+                class="glass p-6 rounded-xl hover:bg-white/5 text-center transition group">
+                <div class="text-3xl mb-3 group-hover:scale-110 transition-transform">➕</div>
+                <div class="font-bold text-emerald-300">Add New Train</div>
+            </button>
+
+            <!-- Export Data Button -->
+            <button onclick="downloadCSV()" class="glass p-6 rounded-xl hover:bg-white/5 text-center transition group">
+                <div class="text-3xl mb-3 group-hover:scale-110 transition-transform">📊</div>
+                <div class="font-bold text-amber-300">Export Bookings</div>
+            </button>
+        </div>
+
+        <!-- Main Content with Tabs -->
+        <div class="glass rounded-xl overflow-hidden min-h-[500px]">
+            <!-- Tabs -->
+            <div class="flex border-b border-white/10">
+                <button id="tabBookings"
+                    class="flex-1 py-4 text-center font-bold text-sm tracking-wide tab-active transition-colors hover:bg-white/5"
+                    onclick="switchTab('bookings')">PASSENGER BOOKINGS</button>
+                <button id="tabFeedbacks"
+                    class="flex-1 py-4 text-center font-bold text-sm tracking-wide tab-inactive transition-colors hover:bg-white/5"
+                    onclick="switchTab('feedbacks')">USER FEEDBACKS</button>
+            </div>
+
+            <!-- Bookings Section -->
+            <div id="sectionBookings" class="p-6">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-slate-400 text-xs uppercase bg-slate-900/50">
+                                <th class="px-6 py-4 font-semibold">ID</th>
+                                <th class="px-6 py-4 font-semibold">Passenger Details</th>
+                                <th class="px-6 py-4 font-semibold">Train</th>
+                                <th class="px-6 py-4 font-semibold">Route</th>
+                                <th class="px-6 py-4 font-semibold">Date</th>
+                                <th class="px-6 py-4 font-semibold">Seat</th>
+                                <th class="px-6 py-4 font-semibold">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bookingTableBody" class="divide-y divide-white/10 text-sm">
+                            <!-- JS Populates this -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Feedbacks Section -->
+            <div id="sectionFeedbacks" class="p-6 hidden">
+                <div id="feedbackContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- JS Populates this -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Train Modal -->
+        <div id="trainModal" class="fixed inset-0 z-[100] hidden">
+            <!-- Backdrop -->
+            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeTrainModal()"></div>
+
+            <!-- Modal Content -->
+            <div
+                class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg glass p-8 rounded-2xl shadow-2xl border border-white/10">
+                <h2 class="text-2xl font-bold text-white mb-6">Add New Train</h2>
+
+                <form id="addTrainForm" class="space-y-4">
+                    <div>
+                        <label class="block text-slate-400 text-sm mb-1">Train Name</label>
+                        <input type="text" id="tName"
+                            class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white"
+                            placeholder="e.g. Express Special" required>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-slate-400 text-sm mb-1">Source ID</label>
+                            <input type="number" id="tSrc"
+                                class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white"
+                                placeholder="ID (e.g. 1)" required>
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 text-sm mb-1">Dest ID</label>
+                            <input type="number" id="tDest"
+                                class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white"
+                                placeholder="ID (e.g. 2)" required>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-slate-400 text-sm mb-1">Departure</label>
+                            <input type="time" id="tDep"
+                                class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white" required>
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 text-sm mb-1">Arrival</label>
+                            <input type="time" id="tArr"
+                                class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white" required>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 text-sm mb-1">Total Seats</label>
+                        <input type="number" id="tSeats"
+                            class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white" value="1000"
+                            required>
+                    </div>
+
+                    <div class="pt-4 flex gap-3">
+                        <button type="button" onclick="closeTrainModal()"
+                            class="flex-1 py-2 bg-slate-700 hover:bg-slate-600 rounded text-white">Cancel</button>
+                        <button type="submit"
+                            class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 rounded text-white font-bold">Add
+                            Train</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const API_BASE_URL = '/api';
+        const token = sessionStorage.getItem('token');
+        const isAdmin = sessionStorage.getItem('isAdmin');
+
+        if (!token || isAdmin !== 'true') window.location.href = 'login.html?role=admin';
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            sessionStorage.clear();
+            window.location.href = 'index.html';
+        });
+
+        // Modal Logic
+        function openTrainModal() {
+            document.getElementById('trainModal').classList.remove('hidden');
+        }
+        function closeTrainModal() {
+            document.getElementById('trainModal').classList.add('hidden');
+        }
+
+        // Add Train Submission
+        document.getElementById('addTrainForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                train_name: document.getElementById('tName').value,
+                source_station_id: document.getElementById('tSrc').value,
+                destination_station_id: document.getElementById('tDest').value,
+                departure_time: document.getElementById('tDep').value + ":00",
+                arrival_time: document.getElementById('tArr').value + ":00",
+                total_seats: document.getElementById('tSeats').value
+            };
+            try {
+                const res = await fetch(`${API_BASE_URL}/schedules`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) { alert('Train Added Successfully!'); closeTrainModal(); }
+                else { alert('Failed to add train. Check inputs.'); }
+            } catch (err) { console.error(err); alert('Error adding train'); }
+        });
+
+        // Export Bookings
+        function downloadCSV() {
+            let csv = 'BookingID,Passenger,Train,Route,Date,Seat,Amount\n';
+            fetch(`${API_BASE_URL}/bookings`, { headers: { 'Authorization': `Bearer ${token}` } })
+                .then(res => res.json())
+                .then(data => {
+                    data.forEach(row => {
+                        csv += `${row.booking_id},"${row.passenger_name}","${row.train_name}","${row.source}->${row.destination}",${row.travel_date},${row.seat_number},${row.amount}\n`;
+                    });
+                    const blob = new Blob([csv], { type: 'text/csv' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.setAttribute('hidden', ''); a.setAttribute('href', url); a.setAttribute('download', 'bookings_report.csv');
+                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                })
+                .catch(err => alert('Failed to export data'));
+        }
+
+        // Toggle Tabs
+        function switchTab(tab) {
+            const bookingsSec = document.getElementById('sectionBookings');
+            const feedbacksSec = document.getElementById('sectionFeedbacks');
+            const tabBookings = document.getElementById('tabBookings');
+            const tabFeedbacks = document.getElementById('tabFeedbacks');
+
+            if (tab === 'bookings') {
+                bookingsSec.classList.remove('hidden');
+                feedbacksSec.classList.add('hidden');
+                tabBookings.className = 'flex-1 py-4 text-center font-bold text-sm tracking-wide tab-active transition-colors hover:bg-white/5';
+                tabFeedbacks.className = 'flex-1 py-4 text-center font-bold text-sm tracking-wide tab-inactive transition-colors hover:bg-white/5';
+            } else {
+                bookingsSec.classList.add('hidden');
+                feedbacksSec.classList.remove('hidden');
+                tabBookings.className = 'flex-1 py-4 text-center font-bold text-sm tracking-wide tab-inactive transition-colors hover:bg-white/5';
+                tabFeedbacks.className = 'flex-1 py-4 text-center font-bold text-sm tracking-wide tab-active transition-colors hover:bg-white/5';
+            }
+        }
+
+        async function loadDashboard() {
+            const headers = { 'Authorization': `Bearer ${token}` };
+            try {
+                // 1. Fetch Bookings and Revenue
+                const resBookings = await fetch(`${API_BASE_URL}/bookings`, { headers });
+                if (resBookings.ok) {
+                    const bookings = await resBookings.json();
+                    document.getElementById('bookingCount').textContent = bookings.length;
+
+                    // Calculate Total Revenue
+                    const totalRev = bookings.reduce((sum, b) => sum + Number(b.amount || 0), 0);
+                    document.getElementById('totalRevenue').textContent = totalRev.toLocaleString('en-IN');
+
+                    // Populate Table
+                    const tbody = document.getElementById('bookingTableBody');
+                    tbody.innerHTML = '';
+                    if (bookings.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" class="text-center p-8 text-slate-500">No bookings yet.</td></tr>';
+                    }
+                    bookings.forEach(b => {
+                        const row = `
+                           <tr class="transition-colors">
+                             <td class="px-6 py-4 text-slate-400 font-mono text-xs">#${b.booking_id}</td>
+                             <td class="px-6 py-4">
+                                <div class="font-bold text-white">${b.passenger_name || b.name}</div>
+                                <div class="text-xs text-slate-500">${b.email}</div>
+                             </td>
+                             <td class="px-6 py-4 text-indigo-300 font-medium">${b.train_name}</td>
+                             <td class="px-6 py-4 text-slate-300">${b.source || b.source_name} → ${b.destination || b.destination_name}</td>
+                             <td class="px-6 py-4 text-slate-400">${new Date(b.travel_date).toLocaleDateString()}</td>
+                             <td class="px-6 py-4 text-slate-300 font-mono">${b.seat_number}</td>
+                             <td class="px-6 py-4"><span class="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-xs font-bold border border-emerald-500/20">Active</span></td>
+                           </tr>
+                        `;
+                        tbody.innerHTML += row;
+                    });
+                }
+
+                // 2. Fetch Active Trains Count
+                const resTrains = await fetch(`${API_BASE_URL}/schedules`, { headers });
+                if (resTrains.ok) {
+                    const trains = await resTrains.json();
+                    document.getElementById('activeTrains').textContent = trains.length;
+                }
+
+                // 3. Fetch Feedbacks
+                const resFeedbacks = await fetch(`${API_BASE_URL}/admin/feedbacks`, { headers });
+                if (resFeedbacks.ok) {
+                    const feedbacks = await resFeedbacks.json();
+                    document.getElementById('feedbackCount').textContent = feedbacks.length;
+
+                    const fbContainer = document.getElementById('feedbackContainer');
+                    fbContainer.innerHTML = '';
+
+                    if (feedbacks.length === 0) {
+                        fbContainer.innerHTML = '<p class="text-slate-500 col-span-2 text-center">No Cleanliness/Service reports yet.</p>';
+                    }
+
+                    feedbacks.forEach(f => {
+                        const card = `
+                         <div class="border border-white/10 p-4 rounded-lg bg-slate-900/30 flex flex-col justify-between hover:bg-white/5 transition">
+                            <div>
+                                <div class="flex justify-between items-start mb-2">
+                                     <span class="inline-block px-2 py-1 rounded bg-indigo-500/20 text-indigo-300 text-xs font-bold border border-indigo-500/30 uppercase">${f.category}</span>
+                                     <span class="text-xs text-slate-500">${new Date(f.created_at).toLocaleDateString()}</span>
+                                </div>
+                                <p class="text-slate-300 italic mb-3">"${f.message}"</p>
+                            </div>
+                            <div class="flex items-center gap-2 mt-auto pt-3 border-t border-white/5">
+                                <div class="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center text-xs">👤</div>
+                                <p class="text-xs text-slate-400 font-mono">${f.user_email}</p>
+                            </div>
+                         </div>
+                       `;
+                        fbContainer.innerHTML += card;
+                    });
+                }
+
+            } catch (e) {
+                console.error("Error loading dashboard", e);
+            }
+        }
+
+        // Initial Load
+        loadDashboard();
+
+        // Real-time updates (poll every 5 seconds)
+        setInterval(loadDashboard, 5000);
+    </script>
+</body>
+
+</html>

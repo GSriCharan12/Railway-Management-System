@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Railway Express | Next Gen Travel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- New Font: Outfit -->
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body
+  class="bg-slate-950 text-slate-200 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white overflow-x-hidden">
+
+  <!-- Background Gradients -->
+  <div class="fixed inset-0 z-0 pointer-events-none">
+    <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-900/20 rounded-full blur-[128px]"></div>
+    <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-violet-900/20 rounded-full blur-[128px]"></div>
+  </div>
+
+  <!-- Navbar -->
+  <header
+    class="fixed w-full z-50 transition-all duration-300 bg-slate-950/80 backdrop-blur-md border-b border-white/5">
+    <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+      <a href="index.html" class="flex items-center gap-2 group">
+        <span class="text-3xl">🚄</span>
+        <span
+          class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-violet-400 group-hover:to-indigo-400 transition-all duration-300">Railway
+          Express</span>
+      </a>
+
+      <nav class="flex items-center gap-4" id="navLinks">
+        <span id="userWelcome" class="hidden font-medium text-indigo-300 mr-2 animate-pulse"></span>
+
+        <!-- User Login Button -->
+        <a href="login.html" id="userLoginBtn"
+          class="px-5 py-2.5 rounded-full bg-slate-800 text-white font-medium border border-slate-700 hover:bg-slate-700 hover:border-indigo-500 transition-all duration-300 hover:scale-105">
+          User Login
+        </a>
+
+        <!-- Admin Login Button -->
+        <a href="login.html?role=admin" id="adminLoginBtn"
+          class="px-5 py-2.5 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-medium hover:from-indigo-500 hover:to-violet-500 transition-all duration-300 hover:scale-105 glow-button shadow-lg shadow-indigo-500/20">
+          Admin Login
+        </a>
+
+        <!-- Logout Button -->
+        <a href="#" id="logoutLink"
+          class="hidden px-5 py-2.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/50 hover:bg-red-500 hover:text-white transition-all duration-300">
+          Logout
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <main class="flex-grow relative z-10 flex flex-col justify-center items-center text-center px-4 pt-32 pb-20">
+    <div class="max-w-5xl mx-auto opacity-0 animate-fade-in-up">
+      <h1 class="text-6xl md:text-8xl font-bold mb-6 tracking-tight leading-tight">
+        The Future of <br />
+        <span
+          class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 glow-text">
+          Train Travel
+        </span>
+      </h1>
+      <p
+        class="text-xl md:text-2xl text-slate-400 mb-10 max-w-2xl mx-auto font-light delay-100 opacity-0 animate-fade-in-up">
+        Experience seamless booking, live tracking, and premium comfort. Your journey begins here.
+      </p>
+
+      <div class="delay-200 opacity-0 animate-fade-in-up">
+        <a href="login.html" id="mainBookBtn"
+          class="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white transition-all duration-200 bg-indigo-600 font-pj rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600 hover:bg-indigo-500 glow-button">
+          Book Your Ticket
+          <svg class="w-5 h-5 ml-2 -mr-1 transition-transform group-hover:translate-x-1"
+            xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+              clip-rule="evenodd" />
+          </svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- Quick Stats / Features -->
+    <div
+      class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20 w-full max-w-6xl px-4 delay-300 opacity-0 animate-fade-in-up">
+      <div
+        class="glass p-8 rounded-2xl hover:bg-white/5 transition-all duration-300 hover:-translate-y-2 group cursor-default">
+        <div class="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">⚡</div>
+        <h3 class="text-xl font-bold text-white mb-2">Instant Booking</h3>
+        <p class="text-slate-400">Book tickets in seconds with our lightning-fast engine.</p>
+      </div>
+      <div
+        class="glass p-8 rounded-2xl hover:bg-white/5 transition-all duration-300 hover:-translate-y-2 group cursor-default">
+        <div class="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">📍</div>
+        <h3 class="text-xl font-bold text-white mb-2">Live Tracking</h3>
+        <p class="text-slate-400">Real-time status updates for all trains across the network.</p>
+      </div>
+      <div
+        class="glass p-8 rounded-2xl hover:bg-white/5 transition-all duration-300 hover:-translate-y-2 group cursor-default">
+        <div class="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">🛡️</div>
+        <h3 class="text-xl font-bold text-white mb-2">Secure Travel</h3>
+        <p class="text-slate-400">Top-tier security and 24/7 support for peace of mind.</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Additional Services Section (Hidden until Login) -->
+  <section id="travelToolsSection" class="py-20 px-4 relative z-10 hidden">
+    <div class="max-w-4xl mx-auto text-center">
+      <h2 class="text-3xl md:text-4xl font-bold text-white mb-12">Travel Tools</h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <!-- Live Status -->
+        <a href="livestatus.html"
+          class="glass p-8 rounded-xl hover:bg-white/5 transition-all hover:-translate-y-1 group">
+          <div class="text-4xl mb-4 group-hover:scale-110 transition-transform">🚦</div>
+          <h3 class="text-xl font-bold text-indigo-300 mb-2">Live Train Status</h3>
+          <p class="text-sm text-slate-400">Track your train's real-time location.</p>
+        </a>
+
+        <!-- PNR Status -->
+        <a href="pnrstatus.html"
+          class="glass p-8 rounded-xl hover:bg-white/5 transition-all hover:-translate-y-1 group">
+          <div class="text-4xl mb-4 group-hover:scale-110 transition-transform">🔍</div>
+          <h3 class="text-xl font-bold text-indigo-300 mb-2">PNR Enquiry</h3>
+          <p class="text-sm text-slate-400">Check your booking confirmation status.</p>
+        </a>
+
+        <!-- Feedback -->
+        <a href="feedback.html" class="glass p-8 rounded-xl hover:bg-white/5 transition-all hover:-translate-y-1 group">
+          <div class="text-4xl mb-4 group-hover:scale-110 transition-transform">💬</div>
+          <h3 class="text-xl font-bold text-indigo-300 mb-2">Share Feedback</h3>
+          <p class="text-sm text-slate-400">Help us improve your journey.</p>
+        </a>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Social Section -->
+  <section class="border-t border-white/5 bg-slate-900/50 py-16 relative z-10">
+    <div class="max-w-6xl mx-auto text-center px-4">
+      <h2 class="text-2xl font-bold mb-8 text-slate-300">Connect With Us</h2>
+      <div class="flex justify-center gap-8">
+        <a href="#"
+          class="p-3 glass rounded-full hover:bg-indigo-600 hover:border-indigo-500 transition-all duration-300 hover:scale-110 group">
+          <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/facebook.svg"
+            class="w-6 h-6 invert opacity-70 group-hover:opacity-100" alt="Facebook">
+        </a>
+        <a href="#"
+          class="p-3 glass rounded-full hover:bg-sky-500 hover:border-sky-400 transition-all duration-300 hover:scale-110 group">
+          <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/twitter.svg"
+            class="w-6 h-6 invert opacity-70 group-hover:opacity-100" alt="Twitter">
+        </a>
+        <a href="#"
+          class="p-3 glass rounded-full hover:bg-pink-600 hover:border-pink-500 transition-all duration-300 hover:scale-110 group">
+          <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/instagram.svg"
+            class="w-6 h-6 invert opacity-70 group-hover:opacity-100" alt="Instagram">
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-slate-950 border-t border-white/5 py-8 text-center text-slate-500 relative z-10">
+    <p>&copy; 2025 Railway Express. Designed for the Future.</p>
+  </footer>
+
+  <!-- Scripts -->
+  <script>
+    const API_BASE_URL = '/api';
+
+    // Auth Logic
+    document.addEventListener('DOMContentLoaded', function () {
+      const token = sessionStorage.getItem('token');
+      const username = sessionStorage.getItem('username');
+
+      const userLoginBtn = document.getElementById('userLoginBtn');
+      const adminLoginBtn = document.getElementById('adminLoginBtn');
+      const userWelcome = document.getElementById('userWelcome');
+      const mainBookBtn = document.getElementById('mainBookBtn');
+      const travelTools = document.getElementById('travelToolsSection');
+
+      if (token) {
+        // User is logged in
+        if (userLoginBtn) userLoginBtn.classList.add('hidden');
+        if (adminLoginBtn) adminLoginBtn.classList.add('hidden');
+        if (logoutLink) logoutLink.classList.remove('hidden');
+        if (userWelcome) userWelcome.classList.remove('hidden');
+        if (travelTools) travelTools.classList.remove('hidden');
+
+        // Set welcome message
+        userWelcome.textContent = `Hello, ${username || 'Traveler'}`;
+
+        // Update Book Now button
+        if (mainBookBtn) {
+          mainBookBtn.href = 'booking.html';
+        }
+
+        // Logout handler
+        logoutLink.addEventListener('click', function (e) {
+          e.preventDefault();
+          sessionStorage.clear();
+          window.location.reload();
+        });
+      }
+    });
+  </script>
+</body>
+
+</html>

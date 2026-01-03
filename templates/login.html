@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login | Railway Express</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body
+  class="bg-slate-950 text-slate-200 min-h-screen flex flex-col relative overflow-hidden selection:bg-indigo-500 selection:text-white">
+
+  <!-- Background Gradients -->
+  <div class="fixed inset-0 z-0 pointer-events-none">
+    <div class="absolute top-[-10%] left-[20%] w-[30%] h-[30%] bg-indigo-900/20 rounded-full blur-[100px]"></div>
+    <div class="absolute bottom-[-10%] right-[20%] w-[30%] h-[30%] bg-violet-900/20 rounded-full blur-[100px]"></div>
+  </div>
+
+  <!-- Navbar -->
+  <header
+    class="fixed w-full z-50 transition-all duration-300 bg-slate-950/80 backdrop-blur-md border-b border-white/5">
+    <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+      <a href="index.html" class="flex items-center gap-2 group">
+        <span class="text-3xl">🚄</span>
+        <span
+          class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-violet-400">Railway
+          Express</span>
+      </a>
+      <a href="index.html" class="text-slate-400 hover:text-white transition-colors">Back to Home</a>
+    </div>
+  </header>
+
+  <main class="flex-grow flex items-center justify-center relative z-10 pt-20 px-4">
+    <div class="w-full max-w-md glass rounded-2xl shadow-2xl p-8 border border-white/10">
+
+      <!-- Dynamic Title -->
+      <h2 id="loginTitle" class="text-3xl font-bold text-white mb-2 text-center tracking-tight">Login</h2>
+      <p id="loginSubtitle" class="text-slate-400 text-center mb-8 text-sm">Welcome back</p>
+
+      <!-- Login Type Tabs (Hidden by default, used only if we want to allow switching, but user requested separation) -->
+      <div id="tabContainer" class="hidden flex mb-8 border-b border-white/10">
+        <button id="userTabBtn" class="flex-1 py-3 font-medium text-sm transition-all duration-300 tab-active">User
+          Login</button>
+        <button id="adminTabBtn" class="flex-1 py-3 font-medium text-sm transition-all duration-300 tab-inactive">Admin
+          Login</button>
+      </div>
+
+      <div id="errorMessage"
+        class="hidden bg-red-500/10 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg mb-6 text-sm"></div>
+
+      <form id="loginForm" class="space-y-6">
+        <div>
+          <label for="username" class="block text-slate-400 text-sm font-medium mb-2">Username</label>
+          <input type="text" id="username" name="username"
+            class="w-full bg-slate-900/50 border border-slate-700 rounded-lg py-3 px-4 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+            placeholder="Enter your username" required>
+        </div>
+
+        <div>
+          <label for="password" class="block text-slate-400 text-sm font-medium mb-2">Password</label>
+          <input type="password" id="password" name="password"
+            class="w-full bg-slate-900/50 border border-slate-700 rounded-lg py-3 px-4 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+            placeholder="••••••••" required>
+        </div>
+
+        <button type="submit"
+          class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 glow-button">
+          Login
+        </button>
+      </form>
+
+      <div id="signupLinkContainer" class="text-center mt-8">
+        <p class="text-slate-400 text-sm">New to Railway Express? <a href="signup.html"
+            class="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">Create an account</a></p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bg-slate-950 border-t border-white/5 py-6 text-center text-slate-600 text-sm relative z-10">
+    <p>&copy; 2025 Railway Express. All rights reserved.</p>
+  </footer>
+
+  <script>
+    const API_BASE_URL = '/api';
+    const userTabBtn = document.getElementById('userTabBtn');
+    const adminTabBtn = document.getElementById('adminTabBtn');
+
+    // Check URL params for role
+    const urlParams = new URLSearchParams(window.location.search);
+    const role = urlParams.get('role');
+    let isAdminLogin = role === 'admin';
+
+    // Update UI based on selection / role
+    function updateUI() {
+      const title = document.getElementById('loginTitle');
+      const subtitle = document.getElementById('loginSubtitle');
+      const signupContainer = document.getElementById('signupLinkContainer');
+      const tabContainer = document.getElementById('tabContainer'); // kept hidden but variable here if needed
+
+      if (isAdminLogin) {
+        // Admin Mode
+        title.textContent = 'Admin Login';
+        subtitle.textContent = 'Secure Access Portal';
+        signupContainer.classList.add('hidden'); // Hide signup for admin
+
+        // Ensure tabs are hidden or inactive, we rely on URL param now
+        tabContainer.classList.add('hidden');
+      } else {
+        // User Mode
+        title.textContent = 'User Login';
+        subtitle.textContent = 'Welcome back, traveler';
+        signupContainer.classList.remove('hidden'); // Show signup for user
+
+        // Ensure tabs are hidden
+        tabContainer.classList.add('hidden');
+      }
+    }
+    updateUI();
+
+    // Clear any previous session on load
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('isLoggedIn');
+    sessionStorage.removeItem('username');
+    sessionStorage.removeItem('isAdmin');
+
+    document.getElementById('loginForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const endpoint = isAdminLogin ? `${API_BASE_URL}/admin/login` : `${API_BASE_URL}/login`;
+
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          sessionStorage.setItem('token', data.token);
+          sessionStorage.setItem('isLoggedIn', 'true');
+          sessionStorage.setItem('username', username);
+          sessionStorage.setItem('isAdmin', data.is_admin);
+
+          if (isAdminLogin) {
+            window.location.href = 'admin.html';
+          } else {
+            window.location.href = 'index.html';
+          }
+        } else {
+          const errMsg = document.getElementById('errorMessage');
+          errMsg.textContent = data.message || 'Login failed';
+          errMsg.classList.remove('hidden');
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        const errMsg = document.getElementById('errorMessage');
+        errMsg.textContent = 'A network error occurred. Please try again.';
+        errMsg.classList.remove('hidden');
+      }
+    });
+  </script>
+</body>
+
+</html>

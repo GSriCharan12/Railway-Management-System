@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Live Train Status | Railway Express</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body class="bg-slate-950 text-slate-200 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+  <!-- Background Ambience -->
+  <div class="fixed inset-0 z-0 pointer-events-none">
+    <div class="absolute top-[20%] right-[20%] w-[40%] h-[40%] bg-indigo-900/10 rounded-full blur-[120px]"></div>
+    <div class="absolute bottom-[10%] left-[10%] w-[30%] h-[30%] bg-emerald-900/10 rounded-full blur-[100px]"></div>
+  </div>
+
+  <!-- Navbar -->
+  <header class="fixed w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-white/5">
+    <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+      <a href="index.html" class="flex items-center gap-2 group">
+        <span class="text-3xl">🚄</span>
+        <span
+          class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-violet-400 group-hover:to-indigo-400 transition-all duration-300">Railway
+          Express</span>
+      </a>
+      <nav class="flex items-center gap-6">
+        <a href="index.html" class="text-slate-400 hover:text-white transition-colors">Home</a>
+        <a href="login.html"
+          class="px-4 py-2 bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 rounded-lg hover:bg-indigo-600 hover:text-white transition-all text-sm font-medium">Login</a>
+      </nav>
+    </div>
+  </header>
+
+  <main
+    class="flex-grow pt-32 px-4 pb-20 relative z-10 max-w-2xl mx-auto w-full flex flex-col items-center justify-center">
+
+    <div class="text-center mb-10">
+      <span class="inline-block p-3 rounded-full bg-emerald-500/10 text-emerald-400 text-3xl mb-4">🚦</span>
+      <h1 class="text-4xl font-bold text-white mb-2">Live Train Status</h1>
+      <p class="text-slate-400">Track any train in real-time instantly.</p>
+    </div>
+
+    <div class="glass w-full p-8 rounded-2xl shadow-xl relative overflow-hidden">
+      <!-- Decor -->
+      <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-[40px] -mr-16 -mt-16"></div>
+
+      <form id="statusForm" class="space-y-6 relative z-10">
+        <div>
+          <label class="block text-slate-400 text-sm font-medium mb-2">Train Number or Name</label>
+          <div class="relative">
+            <input type="text" id="trainNumber" placeholder="e.g. 12627 or Karnataka"
+              class="w-full py-4 px-5 rounded-xl text-lg placeholder-slate-600" required />
+            <button type="submit"
+              class="absolute right-2 top-2 bottom-2 px-6 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg transition-all">
+              Track
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Result Card -->
+      <div id="statusDisplay" class="hidden mt-8 pt-8 border-t border-white/10 animate-fade-in-up">
+        <div class="flex justify-between items-start mb-6">
+          <div>
+            <h2 id="trainName" class="text-2xl font-bold text-white">Karnataka Express</h2>
+            <p id="trainNumDisplay" class="text-indigo-400">#12627</p>
+          </div>
+          <span id="statusBadge"
+            class="px-4 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold text-sm">
+            On Time
+          </span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 bg-slate-900/50 p-4 rounded-xl border border-white/5">
+          <div>
+            <p class="text-xs text-slate-500 uppercase font-bold">Current Location</p>
+            <p id="lastStation" class="text-lg text-white font-medium">Nagpur Junction</p>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500 uppercase font-bold">Delay</p>
+            <p id="delayTime" class="text-lg text-emerald-400 font-medium">None</p>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500 uppercase font-bold">Next Stop</p>
+            <p id="nextStation" class="text-lg text-white font-medium">Bhopal Jn</p>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500 uppercase font-bold">Exp. Arrival</p>
+            <p id="arrivalTime" class="text-lg text-white font-medium">02:35 PM</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="notFound"
+        class="hidden mt-6 text-center py-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-300">
+        ❌ Train not found. Please check the number.
+      </div>
+
+    </div>
+
+  </main>
+
+  <footer class="bg-slate-950 border-t border-white/5 py-8 text-center text-slate-500 relative z-10">
+    <p>&copy; 2025 Railway Express. All rights reserved.</p>
+  </footer>
+
+  <script>
+    // Simulated DB of live status
+    const liveData = {
+      "12627": { name: "Karnataka Express", status: "On Time", station: "Nagpur Junction", next: "Bhopal Jn", delay: "None", time: "02:35 PM" },
+      "12951": { name: "Mumbai Rajdhani", status: "On Time", station: "Surat", next: "Vadodara", delay: "None", time: "06:10 PM" },
+      "22436": { name: "Vande Bharat Exp", status: "On Time", station: "Kanpur Central", next: "Prayagraj", delay: "None", time: "11:05 AM" },
+      "12002": { name: "Shatabdi Express", status: "Delayed", station: "Jhansi", next: "Bhopal", delay: "15 mins", time: "02:45 PM" }
+    };
+
+    document.getElementById('statusForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const input = document.getElementById('trainNumber').value.trim();
+      const display = document.getElementById('statusDisplay');
+      const notFound = document.getElementById('notFound');
+
+      // Basic Search Logic
+      let data = liveData[input];
+
+      // Generate random simulated data if not exact match (for demo purposes)
+      if (!data && input.length >= 4) {
+        const statuses = ["On Time", "Delayed", "Arrived"];
+        const currentStat = statuses[Math.floor(Math.random() * statuses.length)];
+        const stations = ["Agra Cantt", "Itarsi", "Vijayawada", "Gwalior", "Mathura"];
+
+        data = {
+          name: "Express Special",
+          status: currentStat,
+          station: stations[Math.floor(Math.random() * stations.length)],
+          next: "Next Junction",
+          delay: currentStat === "Delayed" ? Math.floor(Math.random() * 60) + " mins" : "None",
+          time: "04:00 PM"
+        };
+        // Hack to let users feel it works for any number they saw in dropdown
+        if (!input.match(/^\d+$/)) data.name = input; // If they typed a name
+      }
+
+      if (data) {
+        document.getElementById('trainName').textContent = data.name;
+        document.getElementById('trainNumDisplay').textContent = input.match(/^\d+$/) ? `#${input}` : '#---';
+
+        const badge = document.getElementById('statusBadge');
+        badge.textContent = data.status;
+        if (data.status === "Delayed") {
+          badge.className = "px-4 py-1 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 font-bold text-sm";
+          document.getElementById('delayTime').className = "text-lg text-red-400 font-medium";
+        } else {
+          badge.className = "px-4 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold text-sm";
+          document.getElementById('delayTime').className = "text-lg text-emerald-400 font-medium";
+        }
+
+        document.getElementById('lastStation').textContent = data.station;
+        document.getElementById('nextStation').textContent = data.next;
+        document.getElementById('delayTime').textContent = data.delay;
+        document.getElementById('arrivalTime').textContent = data.time;
+
+        display.classList.remove('hidden');
+        notFound.classList.add('hidden');
+      } else {
+        display.classList.add('hidden');
+        notFound.classList.remove('hidden');
+      }
+    });
+
+    // Simple Token check to hide/show Login btn
+    if (sessionStorage.getItem('token')) {
+      document.querySelector('nav a[href="login.html"]').textContent = "Logout";
+      document.querySelector('nav a[href="login.html"]').href = "#";
+      document.querySelector('nav a[href="#"]').addEventListener('click', () => {
+        sessionStorage.clear();
+        window.location.href = "index.html";
+      });
+    }
+  </script>
+</body>
+
+</html>

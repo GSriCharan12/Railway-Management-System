@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign Up | Railway Express</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body
+  class="bg-slate-950 text-slate-200 min-h-screen flex flex-col relative overflow-hidden selection:bg-indigo-500 selection:text-white">
+
+  <!-- Background Gradients -->
+  <div class="fixed inset-0 z-0 pointer-events-none">
+    <div class="absolute top-[-10%] left-[20%] w-[30%] h-[30%] bg-indigo-900/20 rounded-full blur-[100px]"></div>
+    <div class="absolute bottom-[-10%] right-[20%] w-[30%] h-[30%] bg-violet-900/20 rounded-full blur-[100px]"></div>
+  </div>
+
+  <!-- Navbar -->
+  <header
+    class="fixed w-full z-50 transition-all duration-300 bg-slate-950/80 backdrop-blur-md border-b border-white/5">
+    <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+      <a href="index.html" class="flex items-center gap-2 group">
+        <span class="text-3xl">🚄</span>
+        <span
+          class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-violet-400">Railway
+          Express</span>
+      </a>
+      <a href="index.html" class="text-slate-400 hover:text-white transition-colors">Back to Home</a>
+    </div>
+  </header>
+
+  <main class="flex-grow flex items-center justify-center relative z-10 pt-20 px-4 my-12">
+    <div class="w-full max-w-md glass rounded-2xl shadow-2xl p-8 border border-white/10">
+
+      <h2 class="text-3xl font-bold text-white mb-2 text-center tracking-tight">Create Account</h2>
+      <p class="text-slate-400 text-center mb-8 text-sm">Join the future of train travel today.</p>
+
+      <div id="errorMessage"
+        class="hidden bg-red-500/10 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg mb-6 text-sm"></div>
+      <div id="successMessage"
+        class="hidden bg-green-500/10 border border-green-500/50 text-green-200 px-4 py-3 rounded-lg mb-6 text-sm">
+      </div>
+
+      <form id="signupForm" class="space-y-5">
+        <div>
+          <label for="username" class="block text-slate-400 text-sm font-medium mb-2">Username</label>
+          <input type="text" id="username" name="username"
+            class="w-full bg-slate-900/50 border border-slate-700 rounded-lg py-3 px-4 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+            placeholder="Choose a username" required>
+        </div>
+
+        <div>
+          <label for="password" class="block text-slate-400 text-sm font-medium mb-2">Password</label>
+          <input type="password" id="password" name="password"
+            class="w-full bg-slate-900/50 border border-slate-700 rounded-lg py-3 px-4 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+            placeholder="••••••••" required>
+        </div>
+
+        <div>
+          <label for="confirmPassword" class="block text-slate-400 text-sm font-medium mb-2">Confirm Password</label>
+          <input type="password" id="confirmPassword" name="confirmPassword"
+            class="w-full bg-slate-900/50 border border-slate-700 rounded-lg py-3 px-4 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+            placeholder="••••••••" required>
+        </div>
+
+        <button type="submit"
+          class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 glow-button mt-2">
+          Sign Up
+        </button>
+      </form>
+
+      <div class="text-center mt-8">
+        <p class="text-slate-400 text-sm">Already have an account? <a href="login.html"
+            class="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">Log in</a></p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bg-slate-950 border-t border-white/5 py-6 text-center text-slate-600 text-sm relative z-10">
+    <p>&copy; 2025 Railway Express. All rights reserved.</p>
+  </footer>
+
+  <script>
+    const API_BASE_URL = '/api';
+
+    document.getElementById('signupForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      const errorMsg = document.getElementById('errorMessage');
+      const successMsg = document.getElementById('successMessage');
+      errorMsg.classList.add('hidden');
+      successMsg.classList.add('hidden');
+
+      if (!username || !password || !confirmPassword) {
+        errorMsg.textContent = 'All fields are required';
+        errorMsg.classList.remove('hidden');
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        errorMsg.textContent = 'Passwords do not match';
+        errorMsg.classList.remove('hidden');
+        return;
+      }
+
+      if (password.length < 6) {
+        errorMsg.textContent = 'Password must be at least 6 characters long';
+        errorMsg.classList.remove('hidden');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/signup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          successMsg.textContent = 'Account created successfully! Redirecting...';
+          successMsg.classList.remove('hidden');
+          document.getElementById('signupForm').reset();
+
+          sessionStorage.setItem('username', username);
+
+          setTimeout(() => {
+            window.location.href = 'login.html';
+          }, 2000);
+        } else {
+          errorMsg.textContent = data.message || 'An error occurred during signup';
+          errorMsg.classList.remove('hidden');
+        }
+      } catch (error) {
+        console.error('Error during signup:', error);
+        errorMsg.textContent = 'A network error occurred. Please try again.';
+        errorMsg.classList.remove('hidden');
+      }
+    });
+  </script>
+</body>
+
+</html>

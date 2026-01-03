@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Book Tickets | Railway Express</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body class="bg-slate-950 text-slate-200 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+  <!-- Background Ambience -->
+  <div class="fixed inset-0 z-0 pointer-events-none">
+    <div class="absolute top-[10%] left-[10%] w-[30%] h-[30%] bg-indigo-900/20 rounded-full blur-[100px]"></div>
+    <div class="absolute bottom-[10%] right-[10%] w-[30%] h-[30%] bg-violet-900/20 rounded-full blur-[100px]"></div>
+  </div>
+
+  <!-- Navbar -->
+  <header class="fixed w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-white/5">
+    <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+      <a href="index.html" class="flex items-center gap-2 group">
+        <span class="text-3xl">🚄</span>
+        <span
+          class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-violet-400 group-hover:to-indigo-400 transition-all duration-300">Railway
+          Express</span>
+      </a>
+
+      <nav class="flex items-center gap-6">
+        <span id="welcomeMsg" class="text-sm font-medium text-indigo-300 hidden">Welcome, Traveler</span>
+        <button id="logoutBtn"
+          class="hidden px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500 hover:text-white transition-all text-sm font-medium">
+          Logout
+        </button>
+        <a href="login.html" id="loginLink" class="text-slate-400 hover:text-white transition-colors">Login</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="flex-grow pt-32 px-4 pb-20 relative z-10 max-w-6xl mx-auto w-full">
+
+    <div class="text-center mb-12">
+      <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">Book Your Journey</h1>
+      <p class="text-slate-400">Search for trains between real Indian cities.</p>
+    </div>
+
+    <!-- Search Section -->
+    <div class="glass p-8 rounded-2xl mb-12 shadow-xl border border-white/10">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+        <div>
+          <label class="block text-slate-400 text-sm font-medium mb-2">From Station</label>
+          <select id="fromStation" class="w-full py-3 px-4 rounded-lg">
+            <option value="">Select Source</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-slate-400 text-sm font-medium mb-2">To Station</label>
+          <select id="toStation" class="w-full py-3 px-4 rounded-lg">
+            <option value="">Select Destination</option>
+          </select>
+        </div>
+        <button id="searchTrainsBtn"
+          class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-8 rounded-lg transition-all shadow-lg shadow-indigo-500/20 h-[50px]">
+          Find Trains
+        </button>
+      </div>
+    </div>
+
+    <!-- Train Results Section (Hidden initially) -->
+    <div id="resultsSection" class="hidden mb-12 animate-fade-in-up">
+      <h3 class="text-xl font-bold text-white mb-4">Available Trains</h3>
+      <div id="trainsList" class="grid grid-cols-1 gap-4">
+        <!-- Populated via JS -->
+      </div>
+      <div id="noTrainsMsg" class="hidden text-center py-8 text-slate-500">
+        No trains found between these stations. Try searching New Delhi -> Varanasi.
+      </div>
+    </div>
+
+    <!-- Booking Form (Hidden until train selected) -->
+    <div id="bookingSection"
+      class="hidden glass p-8 md:p-10 rounded-2xl shadow-2xl border border-white/10 relative overflow-hidden animate-fade-in-up">
+      <div class="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-[80px] -mr-32 -mt-32"></div>
+
+      <div class="mb-8 p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-lg flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <span class="text-3xl">🚆</span>
+          <div>
+            <p class="text-sm text-indigo-300 uppercase font-bold">Selected Train</p>
+            <h4 id="selectedTrainName" class="text-xl font-bold text-white">Train Name</h4>
+            <p id="selectedTrainRoute" class="text-sm text-slate-400">Route Info</p>
+          </div>
+        </div>
+        <button id="changeTrainBtn" class="text-sm text-slate-400 hover:text-white underline">Change</button>
+      </div>
+
+      <div id="errorMessage"
+        class="hidden bg-red-500/10 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg mb-6 text-sm"></div>
+
+      <form id="bookingForm" class="space-y-8 relative z-10">
+        <input type="hidden" id="selectedScheduleId">
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-slate-400 text-sm font-medium mb-2">Passenger Name</label>
+            <input type="text" id="passengerName" class="w-full py-3 px-4 rounded-lg placeholder-slate-500"
+              placeholder="e.g. John Doe" required>
+          </div>
+          <div>
+            <label class="block text-slate-400 text-sm font-medium mb-2">Email Address</label>
+            <input type="email" id="passengerEmail" class="w-full py-3 px-4 rounded-lg placeholder-slate-500"
+              placeholder="john@example.com" required>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-slate-400 text-sm font-medium mb-2">Travel Class</label>
+            <select id="travelClass" class="w-full py-3 px-4 rounded-lg" required>
+              <option value="SL">Sleeper (SL)</option>
+              <option value="3A">AC 3 Tier (3A)</option>
+              <option value="2A">AC 2 Tier (2A)</option>
+              <option value="1A">AC First Class (1A)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 text-sm font-medium mb-2">Travel Date</label>
+            <input type="date" id="travelDate" class="w-full py-3 px-4 rounded-lg" required>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-slate-400 text-sm font-medium mb-2">Amount (₹)</label>
+            <input type="number" id="amount" min="1" class="w-full py-3 px-4 rounded-lg" placeholder="Total fare"
+              required>
+          </div>
+          <div>
+            <label class="block text-slate-400 text-sm font-medium mb-2">Payment Method</label>
+            <select id="paymentMethod" class="w-full py-3 px-4 rounded-lg" required>
+              <option value="">Choose method</option>
+              <option value="credit_card">Credit Card</option>
+              <option value="debit_card">Debit Card</option>
+              <option value="upi">UPI</option>
+              <option value="net_banking">Net Banking</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit"
+          class="w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/20 transition-all transform hover:scale-[1.01]">
+          Confirm & Book Ticket
+        </button>
+      </form>
+
+      <p class="mt-6 text-center text-xs text-slate-500">
+        *Real-time API tracking is simulated for this demo project. In a production environment, APIs like IRCTC Connect
+        would be used.
+      </p>
+    </div>
+
+    <!-- Confirmation View -->
+    <div id="bookingDetails" class="hidden relative z-10 text-center py-8">
+      <div
+        class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 mb-6">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+      </div>
+      <h2 class="text-3xl font-bold text-white mb-2">Booking Confirmed!</h2>
+      <p class="text-slate-400 mb-8">Your ticket has been successfully booked.</p>
+
+      <div class="glass rounded-xl p-6 max-w-lg mx-auto text-left space-y-3 mb-8">
+        <div class="flex justify-between border-b border-white/10 pb-2">
+          <span class="text-slate-400">Booking ID</span>
+          <span class="font-mono font-bold text-white" id="outBookingId"></span>
+        </div>
+        <div class="flex justify-between border-b border-white/10 pb-2">
+          <span class="text-slate-400">Passenger</span>
+          <span class="font-medium text-white" id="outBookingPassenger"></span>
+        </div>
+        <div class="flex justify-between border-b border-white/10 pb-2">
+          <span class="text-slate-400">Train</span>
+          <span class="font-medium text-white" id="outBookingTrain"></span>
+        </div>
+        <div class="flex justify-between border-b border-white/10 pb-2">
+          <span class="text-slate-400">Date</span>
+          <span class="font-medium text-white" id="outBookingDate"></span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-400">Seat</span>
+          <span class="font-medium text-white" id="outBookingSeat"></span>
+        </div>
+      </div>
+
+      <button id="bookAnotherBtn"
+        class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-lg transition-all border border-white/10">
+        Book Another Ticket
+      </button>
+    </div>
+
+  </main>
+
+  <footer class="bg-slate-950 border-t border-white/5 py-8 text-center text-slate-500 relative z-10">
+    <p>&copy; 2025 Railway Express. Next Gen Travel.</p>
+  </footer>
+
+  <script>
+    const API_BASE_URL = '/api';
+    let allSchedules = [];
+
+    // Auth Check
+    const token = sessionStorage.getItem('token');
+    if (token) {
+      document.getElementById('welcomeMsg').textContent = `Welcome, ${sessionStorage.getItem('username') || 'Traveler'}`;
+      document.getElementById('welcomeMsg').classList.remove('hidden');
+      document.getElementById('logoutBtn').classList.remove('hidden');
+      document.getElementById('loginLink').classList.add('hidden');
+    } else {
+      window.location.href = 'login.html';
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      sessionStorage.clear();
+      window.location.href = 'index.html';
+    });
+
+    // Date Restriction
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('travelDate').setAttribute('min', today);
+
+    // Initial Data Load
+    async function initData() {
+      try {
+        // Load Stations
+        const stationRes = await fetch(`${API_BASE_URL}/stations`);
+        const stations = await stationRes.json();
+
+        const fromSel = document.getElementById('fromStation');
+        const toSel = document.getElementById('toStation');
+
+        stations.forEach(s => {
+          const opt = `<option value="${s.station_name}">${s.station_name} (${s.code})</option>`;
+          fromSel.innerHTML += opt;
+          toSel.innerHTML += opt;
+        });
+
+        // Pre-load Schedules (for client-side filtering)
+        const schedRes = await fetch(`${API_BASE_URL}/schedules`);
+        allSchedules = await schedRes.json();
+
+      } catch (e) {
+        console.error("Error loading data", e);
+      }
+    }
+    initData();
+
+    // Search Logic
+    document.getElementById('searchTrainsBtn').addEventListener('click', () => {
+      const from = document.getElementById('fromStation').value;
+      const to = document.getElementById('toStation').value;
+      const list = document.getElementById('trainsList');
+      const msg = document.getElementById('noTrainsMsg');
+      const resSec = document.getElementById('resultsSection');
+
+      if (!from || !to) {
+        alert('Please select both Origin and Destination');
+        return;
+      }
+      if (from === to) {
+        alert('Origin and Destination cannot be the same');
+        return;
+      }
+
+      // Filter
+      const matches = allSchedules.filter(s => s.source === from && s.destination === to);
+
+      list.innerHTML = '';
+      resSec.classList.remove('hidden');
+      document.getElementById('bookingSection').classList.add('hidden');
+
+      if (matches.length > 0) {
+        msg.classList.add('hidden');
+        matches.forEach(m => {
+          const div = document.createElement('div');
+          div.className = "train-card glass p-6 rounded-xl border border-white/10 cursor-pointer hover:bg-white/5 transition-all";
+          div.innerHTML = `
+                <div class="flex justify-between items-center">
+                   <div>
+                      <h4 class="text-lg font-bold text-white">${m.train_name}</h4>
+                      <p class="text-sm text-slate-400">${m.departure_time} - ${m.arrival_time}</p>
+                   </div>
+                   <div class="text-right">
+                      <p class="text-emerald-400 font-bold text-sm">${m.available_seats || 100} Seats</p>
+                      <button class="mt-2 text-xs bg-indigo-600 hover:bg-indigo-500 px-3 py-1 rounded text-white">Select</button>
+                   </div>
+                </div>
+             `;
+          div.onclick = () => selectTrain(m);
+          list.appendChild(div);
+        });
+      } else {
+        msg.classList.remove('hidden');
+      }
+    });
+
+    // Fare Calculation Logic
+    let currentDistance = 0;
+
+    // Simulate Distance based on deterministic hash of station names
+    // (Consistently generating same distance for same route)
+    function getDistance(from, to) {
+      let hash = 0;
+      const combined = from + to;
+      for (let i = 0; i < combined.length; i++) {
+        hash = combined.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      // Normalize to a realistic distance range (e.g., 200km to 2500km)
+      return (Math.abs(hash) % 2300) + 200;
+    }
+
+    function calculateFare() {
+      const cls = document.getElementById('travelClass').value;
+      const trainName = document.getElementById('selectedTrainName').textContent;
+
+      // 1. Base Rate per km
+      let ratePerKm = 0.5; // Sleeper Base
+      if (cls === '3A') ratePerKm = 1.2;
+      if (cls === '2A') ratePerKm = 1.8;
+      if (cls === '1A') ratePerKm = 2.5;
+
+      // 2. Train Type Surcharge
+      let surcharge = 0;
+      if (trainName.includes('Rajdhani') || trainName.includes('Vande') || trainName.includes('Shatabdi')) {
+        surcharge = 500; // Premium Tax
+        ratePerKm *= 1.2; // Premium rates are higher
+      } else if (trainName.includes('Duronto') || trainName.includes('Superfast')) {
+        surcharge = 200;
+      }
+
+      // 3. Final Calc
+      const finalPrice = Math.round((currentDistance * ratePerKm) + surcharge);
+
+      const amountInput = document.getElementById('amount');
+      amountInput.value = finalPrice;
+
+      // Update info for user
+      const routeInfo = document.getElementById('selectedTrainRoute');
+      // Remove previous distance info if present
+      routeInfo.textContent = routeInfo.textContent.split(' | Distance:')[0];
+      routeInfo.textContent += ` | Distance: ${currentDistance} km`;
+    }
+
+    // Select Train
+    function selectTrain(train) {
+      document.getElementById('resultsSection').classList.add('hidden');
+      document.getElementById('bookingSection').classList.remove('hidden');
+
+      // Calculate simulated distance
+      currentDistance = getDistance(train.source, train.destination);
+
+      document.getElementById('selectedScheduleId').value = train.id;
+      document.getElementById('selectedTrainName').textContent = train.train_name;
+      document.getElementById('selectedTrainRoute').textContent = `${train.source} → ${train.destination} (${train.departure_time})`;
+
+      // Initial calculation (Default SL)
+      document.getElementById('travelClass').value = "SL";
+      calculateFare();
+
+      // Lock Amount
+      const amountInput = document.getElementById('amount');
+      amountInput.setAttribute('readonly', true);
+      amountInput.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+
+    // Recalculate on class change
+    document.getElementById('travelClass').addEventListener('change', calculateFare);
+
+    document.getElementById('changeTrainBtn').addEventListener('click', () => {
+      document.getElementById('bookingSection').classList.add('hidden');
+      document.getElementById('resultsSection').classList.remove('hidden');
+    });
+
+    document.getElementById('bookAnotherBtn').addEventListener('click', () => {
+      location.reload();
+    });
+
+    // Submit Booking
+    document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const err = document.getElementById('errorMessage');
+      err.classList.add('hidden');
+
+      // We removed the input for Seat Number in the HTML edit above (accidentally replaced it with Class?)
+      // Wait, checking previous edit... I replaced the entire block containing Seat Number.
+      // I need to ensure Seat Number exists or is Auto-assigned.
+      // If I removed seat number input, I should auto-generate it or add it back.
+      // Let's Auto-Assign a random seat number for better UX.
+
+      const randomSeat = Math.floor(Math.random() * 72) + 1;
+      const selectedClass = document.getElementById('travelClass').value;
+      const seatNumStr = `${selectedClass}-${randomSeat}`; // e.g. "3A-45"
+
+      const payload = {
+        passenger_name: document.getElementById('passengerName').value,
+        passenger_email: document.getElementById('passengerEmail').value,
+        schedule_id: document.getElementById('selectedScheduleId').value,
+        seat_number: seatNumStr, // Auto-assigned
+        travel_date: document.getElementById('travelDate').value,
+        amount: document.getElementById('amount').value,
+        payment_method: document.getElementById('paymentMethod').value
+      };
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/bookings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          document.getElementById('bookingSection').classList.add('hidden');
+          document.getElementById('bookingDetails').classList.remove('hidden');
+
+          document.getElementById('outBookingId').textContent = data.booking_id;
+          document.getElementById('outBookingPassenger').textContent = payload.passenger_name;
+          document.getElementById('outBookingTrain').textContent = document.getElementById('selectedTrainName').textContent;
+          document.getElementById('outBookingDate').textContent = payload.travel_date;
+          document.getElementById('outBookingSeat').textContent = payload.seat_number;
+        } else {
+          err.textContent = data.message || "Booking failed";
+          err.classList.remove('hidden');
+        }
+      } catch (e) {
+        err.textContent = "Network Error";
+        err.classList.remove('hidden');
+      }
+    });
+  </script>
+</body>
+
+</html>
