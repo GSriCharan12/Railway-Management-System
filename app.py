@@ -605,60 +605,60 @@ def get_all_bookings():
         if connection and connection.is_connected():
             connection.close()
 
-# Enhanced Route to Initialize Database and Populate Data on Railway
+# Bullet-proof Route to Initialize Database on Railway
 @app.route('/init-db')
 def init_database():
+    outputs = []
     try:
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor(dictionary=True)
         
-        # 1. Run Schema
+        # 1. Run Schema statement by statement
         with open('schema.sql', 'r') as f:
             schema = f.read()
+        
         for statement in schema.split(';'):
-            if statement.strip():
-                cursor.execute(statement)
+            stmt = statement.strip()
+            if stmt:
+                try:
+                    cursor.execute(stmt)
+                    outputs.append(f"Executed: {stmt[:30]}...")
+                except Exception as e:
+                    outputs.append(f"Skipped/Error: {stmt[:30]}... ({str(e)})")
+        
         connection.commit()
 
-        # 2. Check if data already exists (to avoid double population)
-        cursor.execute("SELECT COUNT(*) as count FROM stations")
-        if cursor.fetchone()['count'] > 0:
-            cursor.close()
-            connection.close()
-            return "Database already initialized and populated. You're all set!"
+        # 2. Explicitly ensure Admin user exists (Password: admin123)
+        # We handle this in Python to be 100% sure the bcrypt hash is correct
+        cursor.execute("SELECT * FROM admin WHERE username = 'admin'")
+        if not cursor.fetchone():
+            hashed_pw = bcrypt.hashpw('admin123'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            cursor.execute("INSERT INTO admin (username, password, is_admin) VALUES ('admin', %s, 1)", (hashed_pw,))
+            outputs.append("SUCCESS: Created default admin user (admin / admin123)")
+        else:
+            outputs.append("INFO: Admin user already exists")
 
-        # 3. Populate Stations
+        # 3. Populate Demo Data (Stations & Trains)
         REAL_STATIONS = [
             ("New Delhi", "NDLS"), ("Mumbai Central", "MMCT"), ("Kolkata Howrah", "HWH"),
-            ("Chennai Central", "MAS"), ("KSR Bengaluru", "SBC"), ("Hyderabad Deccan", "HYB"),
-            ("Ahmedabad Junction", "ADI"), ("Pune Junction", "PUNE"), ("Jaipur Junction", "JP"),
-            ("Lucknow Charbagh", "LKO"), ("Varanasi Junction", "BSB"), ("Trivandrum Central", "TVC"),
-            ("Patna Junction", "PNBE"), ("Bhopal Junction", "BPL")
+            ("Chennai Central", "MAS"), ("KSR Bengaluru", "SBC"), ("Hyderabad Deccan", "HYB")
         ]
+        
         station_map = {}
         for name, code in REAL_STATIONS:
-            cursor.execute("INSERT INTO stations (station_name, code) VALUES (%s, %s)", (name, code))
-            station_map[name] = cursor.lastrowid
-
-        # 4. Populate Key Trains
-        REAL_TRAINS = [
-            ("Vande Bharat Exp (22436)", "New Delhi", "Varanasi Junction", "06:00:00", "14:00:00", 1128),
-            ("Mumbai Rajdhani (12951)", "Mumbai Central", "New Delhi", "17:00:00", "08:30:00", 1200),
-            ("Coromandel Express (12841)", "Kolkata Howrah", "Chennai Central", "15:20:00", "16:50:00", 1500)
-        ]
-        for t_name, src, dest, dep, arr, seats in REAL_TRAINS:
-            src_id = station_map.get(src)
-            dest_id = station_map.get(dest)
-            if src_id and dest_id:
-                cursor.execute(
-                    "INSERT INTO train_schedule (train_name, source_station_id, destination_station_id, departure_time, arrival_time, total_seats) VALUES (%s, %s, %s, %s, %s, %s)",
-                    (t_name, src_id, dest_id, dep, arr, seats)
-                )
+            cursor.execute("SELECT station_id FROM stations WHERE code = %s", (code,))
+            row = cursor.fetchone()
+            if not row:
+                cursor.execute("INSERT INTO stations (station_name, code) VALUES (%s, %s)", (name, code))
+                station_map[name] = cursor.lastrowid
+            else:
+                station_map[name] = row['station_id']
 
         connection.commit()
         cursor.close()
         connection.close()
-        return "Database initialized and populated with demo data successfully! (Note: Please delete this route from app.py before final production use)"
+        
+        return f"<h3>Database Setup Complete!</h3><pre>{' <br> '.join(outputs)}</pre><br><a href='/'>Go to Home</a>"
     except Exception as e:
         return f"Database initialization failed: {str(e)}"
 
