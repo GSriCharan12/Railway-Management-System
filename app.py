@@ -109,8 +109,9 @@ def admin_required(f):
             # Check if the user is an admin
             if not data.get('is_admin', False):
                 return jsonify({'message': 'Admin access required!'}), 403
-            return f(*args, **kwargs)
-        except:
+            # Pass the user identity as the first argument
+            return f(data.get('user'), *args, **kwargs)
+        except Exception as e:
             return jsonify({'message': 'Token is invalid!'}), 401
     decorated.__name__ = f.__name__
     return decorated
@@ -576,7 +577,7 @@ def get_bookings_count():
 # Get all bookings for admin
 @app.route('/api/bookings', methods=['GET'])
 @admin_required
-def get_all_bookings():
+def get_all_bookings(current_user):
     connection = None
     cursor = None
     try:
