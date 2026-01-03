@@ -439,7 +439,7 @@ def submit_feedback():
         cursor = connection.cursor()
         
         cursor.execute(
-            "INSERT INTO feedbacks (user_email, category, message) VALUES (%s, %s, %s)",
+            "INSERT INTO feedbacks (email, category, message) VALUES (%s, %s, %s)",
             (email, category, message)
         )
         connection.commit()
