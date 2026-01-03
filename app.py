@@ -605,25 +605,60 @@ def get_all_bookings():
         if connection and connection.is_connected():
             connection.close()
 
-# Temporary Route to Initialize Database on Railway
+# Enhanced Route to Initialize Database and Populate Data on Railway
 @app.route('/init-db')
 def init_database():
     try:
         connection = mysql.connector.connect(**db_config)
-        cursor = connection.cursor()
+        cursor = connection.cursor(dictionary=True)
         
+        # 1. Run Schema
         with open('schema.sql', 'r') as f:
             schema = f.read()
-            
-        # Split by semicolon and execute each statement
         for statement in schema.split(';'):
             if statement.strip():
                 cursor.execute(statement)
-        
+        connection.commit()
+
+        # 2. Check if data already exists (to avoid double population)
+        cursor.execute("SELECT COUNT(*) as count FROM stations")
+        if cursor.fetchone()['count'] > 0:
+            cursor.close()
+            connection.close()
+            return "Database already initialized and populated. You're all set!"
+
+        # 3. Populate Stations
+        REAL_STATIONS = [
+            ("New Delhi", "NDLS"), ("Mumbai Central", "MMCT"), ("Kolkata Howrah", "HWH"),
+            ("Chennai Central", "MAS"), ("KSR Bengaluru", "SBC"), ("Hyderabad Deccan", "HYB"),
+            ("Ahmedabad Junction", "ADI"), ("Pune Junction", "PUNE"), ("Jaipur Junction", "JP"),
+            ("Lucknow Charbagh", "LKO"), ("Varanasi Junction", "BSB"), ("Trivandrum Central", "TVC"),
+            ("Patna Junction", "PNBE"), ("Bhopal Junction", "BPL")
+        ]
+        station_map = {}
+        for name, code in REAL_STATIONS:
+            cursor.execute("INSERT INTO stations (station_name, code) VALUES (%s, %s)", (name, code))
+            station_map[name] = cursor.lastrowid
+
+        # 4. Populate Key Trains
+        REAL_TRAINS = [
+            ("Vande Bharat Exp (22436)", "New Delhi", "Varanasi Junction", "06:00:00", "14:00:00", 1128),
+            ("Mumbai Rajdhani (12951)", "Mumbai Central", "New Delhi", "17:00:00", "08:30:00", 1200),
+            ("Coromandel Express (12841)", "Kolkata Howrah", "Chennai Central", "15:20:00", "16:50:00", 1500)
+        ]
+        for t_name, src, dest, dep, arr, seats in REAL_TRAINS:
+            src_id = station_map.get(src)
+            dest_id = station_map.get(dest)
+            if src_id and dest_id:
+                cursor.execute(
+                    "INSERT INTO train_schedule (train_name, source_station_id, destination_station_id, departure_time, arrival_time, total_seats) VALUES (%s, %s, %s, %s, %s, %s)",
+                    (t_name, src_id, dest_id, dep, arr, seats)
+                )
+
         connection.commit()
         cursor.close()
         connection.close()
-        return "Database initialized successfully! You can now use the app. (Please delete this route from app.py later for security)"
+        return "Database initialized and populated with demo data successfully! (Note: Please delete this route from app.py before final production use)"
     except Exception as e:
         return f"Database initialization failed: {str(e)}"
 

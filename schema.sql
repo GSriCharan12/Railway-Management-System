@@ -1,15 +1,12 @@
-CREATE DATABASE IF NOT EXISTS railway_db;
-USE railway_db;
-
 -- 1. Stations Table
-CREATE TABLE stations (
+CREATE TABLE IF NOT EXISTS stations (
   station_id INT AUTO_INCREMENT PRIMARY KEY,
   station_name VARCHAR(100) NOT NULL,
   code VARCHAR(10) UNIQUE NOT NULL
 );
 
 -- 2. Train Schedule Table
-CREATE TABLE train_schedule (
+CREATE TABLE IF NOT EXISTS train_schedule (
   schedule_id INT AUTO_INCREMENT PRIMARY KEY,
   train_name VARCHAR(100),
   source_station_id INT,
@@ -22,14 +19,14 @@ CREATE TABLE train_schedule (
 );
 
 -- 3. Passengers Table
-CREATE TABLE passengers (
+CREATE TABLE IF NOT EXISTS passengers (
   passenger_id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100),
   email VARCHAR(100)
 );
 
 -- 4. Bookings Table
-CREATE TABLE bookings (
+CREATE TABLE IF NOT EXISTS bookings (
   booking_id INT AUTO_INCREMENT PRIMARY KEY,
   passenger_id INT,
   schedule_id INT,
@@ -39,7 +36,7 @@ CREATE TABLE bookings (
 );
 
 -- 5. Tickets Table
-CREATE TABLE tickets (
+CREATE TABLE IF NOT EXISTS tickets (
   ticket_id INT AUTO_INCREMENT PRIMARY KEY,
   booking_id INT,
   seat_number VARCHAR(20),
@@ -48,7 +45,7 @@ CREATE TABLE tickets (
 );
 
 -- 6. Payments Table
-CREATE TABLE payments (
+CREATE TABLE IF NOT EXISTS payments (
   payment_id INT AUTO_INCREMENT PRIMARY KEY,
   booking_id INT,
   amount DECIMAL(10, 2),
@@ -57,13 +54,22 @@ CREATE TABLE payments (
   FOREIGN KEY (booking_id) REFERENCES bookings(booking_id)
 );
 
+-- 7. Feedbacks Table
+CREATE TABLE IF NOT EXISTS feedbacks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(100) NOT NULL,
+    category VARCHAR(50) NOT NULL,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Optional Admin Table
-CREATE TABLE admin (
+CREATE TABLE IF NOT EXISTS admin (
   admin_id INT AUTO_INCREMENT PRIMARY KEY,
-  username VARCHAR(50),
+  username VARCHAR(50) UNIQUE,
   password VARCHAR(100),
   is_admin BOOLEAN DEFAULT FALSE
 );
 
--- Insert default admin user (password: admin123)
-INSERT INTO admin (username, password, is_admin) VALUES ('admin', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', TRUE); 
+-- Insert default admin user (password: admin123) if not existing
+INSERT IGNORE INTO admin (username, password, is_admin) VALUES ('admin', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', TRUE); 
