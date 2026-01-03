@@ -650,10 +650,13 @@ def init_database():
         else:
             outputs.append("INFO: Admin user already exists")
 
-        # 3. Populate Demo Data (Stations & Trains)
+        # 3. Populate ALL Stations
         REAL_STATIONS = [
             ("New Delhi", "NDLS"), ("Mumbai Central", "MMCT"), ("Kolkata Howrah", "HWH"),
-            ("Chennai Central", "MAS"), ("KSR Bengaluru", "SBC"), ("Hyderabad Deccan", "HYB")
+            ("Chennai Central", "MAS"), ("KSR Bengaluru", "SBC"), ("Hyderabad Deccan", "HYB"),
+            ("Ahmedabad Junction", "ADI"), ("Pune Junction", "PUNE"), ("Jaipur Junction", "JP"),
+            ("Lucknow Charbagh", "LKO"), ("Varanasi Junction", "BSB"), ("Trivandrum Central", "TVC"),
+            ("Patna Junction", "PNBE"), ("Bhopal Junction", "BPL")
         ]
         
         station_map = {}
@@ -665,12 +668,41 @@ def init_database():
                 station_map[name] = cursor.lastrowid
             else:
                 station_map[name] = row['station_id']
+        
+        # 4. Populate Full Train List + Synthetic Pairs (Ensure every city is connected)
+        cursor.execute("SELECT COUNT(*) as count FROM train_schedule")
+        if cursor.fetchone()['count'] < 50: # Only populate if list is truncated
+            import random
+            REAL_TRAINS_DATA = [
+                ("Vande Bharat Exp (22436)", "New Delhi", "Varanasi Junction", "06:00:00", "14:00:00", 1128),
+                ("Mumbai Rajdhani (12951)", "Mumbai Central", "New Delhi", "17:00:00", "08:30:00", 1200),
+                ("Coromandel Express (12841)", "Kolkata Howrah", "Chennai Central", "15:20:00", "16:50:00", 1500),
+                ("Karnataka Express (12627)", "KSR Bengaluru", "New Delhi", "19:20:00", "09:00:00", 1400)
+            ]
+            
+            # Add specified real trains
+            for t_name, src, dest, dep, arr, seats in REAL_TRAINS_DATA:
+                s_id = station_map.get(src)
+                d_id = station_map.get(dest)
+                if s_id and d_id:
+                    cursor.execute("INSERT IGNORE INTO train_schedule (train_name, source_station_id, destination_station_id, departure_time, arrival_time, total_seats) VALUES (%s, %s, %s, %s, %s, %s)", (t_name, s_id, d_id, dep, arr, seats))
+
+            # Generate ALL city pairs Express trains
+            cities = list(station_map.keys())
+            for source in cities:
+                for destination in cities:
+                    if source == destination: continue
+                    train_name = f"{source.split(' ')[0]}-{destination.split(' ')[0]} Express"
+                    dep_time = f"{random.randint(5, 22):02d}:{random.choice(['00', '30'])}:00"
+                    arr_time = f"{(random.randint(5, 22) + 6) % 24:02d}:00:00"
+                    cursor.execute("INSERT IGNORE INTO train_schedule (train_name, source_station_id, destination_station_id, departure_time, arrival_time, total_seats) VALUES (%s, %s, %s, %s, %s, 1000)", 
+                                   (train_name, station_map[source], station_map[destination], dep_time, arr_time))
 
         connection.commit()
         cursor.close()
         connection.close()
         
-        return f"<h3>Database Setup Complete!</h3><pre>{' <br> '.join(outputs)}</pre><br><a href='/'>Go to Home</a>"
+        return f"<h3>Database Restored & Populated!</h3><p>All city pairs are now connected.</p><br><a href='/'>Go to Home</a>"
     except Exception as e:
         return f"Database initialization failed: {str(e)}"
 
