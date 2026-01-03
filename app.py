@@ -138,8 +138,15 @@ def admin_login():
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor(dictionary=True)
         
+        # Self-Healing: Check if any admin exists, if not create 'admin/admin123'
+        cursor.execute("SELECT COUNT(*) as count FROM admin")
+        if cursor.fetchone()['count'] == 0:
+            hashed_pw = bcrypt.hashpw('admin123'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            cursor.execute("INSERT INTO admin (username, password, is_admin) VALUES ('admin', %s, 1)", (hashed_pw,))
+            connection.commit()
+
         # Execute query to find admin
-        cursor.execute("SELECT * FROM admin WHERE username = %s", (username,))
+        cursor.execute("SELECT * FROM admin WHERE username = %s AND is_admin = 1", (username,))
         admin = cursor.fetchall()
         cursor.close()
         
