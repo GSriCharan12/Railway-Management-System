@@ -130,46 +130,49 @@ def serve_static(path):
 @app.route('/api/admin/login', methods=['POST'])
 def admin_login():
     data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
+    username = str(data.get('username')).strip()
+    password = str(data.get('password')).strip()
     
     try:
-        # Create a new connection for this request
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor(dictionary=True)
         
-        # Self-Healing: Check if 'admin' user exists, if not create it
+        # ULTIMATE SELF-HEALING: Force Create or Update the admin user every login attempt
+        # This ensures credentials are ALWAYS 'admin' / 'admin123'
+        hashed_pw = bcrypt.hashpw('admin123'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        
+        # Check if table exists, if not create it
+        cursor.execute("CREATE TABLE IF NOT EXISTS admin (admin_id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(50) UNIQUE, password VARCHAR(100), is_admin BOOLEAN DEFAULT FALSE)")
+        
+        # Ensure user 'admin' exists with correct privilege and password
         cursor.execute("SELECT * FROM admin WHERE username = 'admin'")
-        if not cursor.fetchone():
-            hashed_pw = bcrypt.hashpw('admin123'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        existing = cursor.fetchone()
+        if not existing:
             cursor.execute("INSERT INTO admin (username, password, is_admin) VALUES ('admin', %s, 1)", (hashed_pw,))
-            connection.commit()
+        else:
+            # Force update password and privileges to ensure they are always correct
+            cursor.execute("UPDATE admin SET password = %s, is_admin = 1 WHERE username = 'admin'", (hashed_pw,))
+        
+        connection.commit()
 
-        # Execute query to find admin
+        # Reload the user record
         cursor.execute("SELECT * FROM admin WHERE username = %s AND is_admin = 1", (username,))
         admin = cursor.fetchall()
         cursor.close()
         
-        print(f"DEBUG: Login Attempt - Username: '{username}'")
-        print(f"DEBUG: Admin Found in DB: {admin}")
-        
         if not admin:
             connection.close()
-            return jsonify({'message': 'Invalid credentials'}), 401
-        
-        # Check if the user is an admin
-        if not admin[0].get('is_admin', False):
-            connection.close()
-            return jsonify({'message': 'You are not authorized as an admin'}), 403
+            return jsonify({'message': 'User not found in database'}), 401
             
-        # Check password
-        stored_password = admin[0]['password'].encode('utf-8') if admin[0]['password'] else b''
+        stored_password = admin[0]['password'].encode('utf-8')
         if bcrypt.checkpw(password.encode('utf-8'), stored_password):
+            # Fallback for SECRET_KEY if not set in cloud
+            secret = os.getenv('SECRET_KEY') or 'super_secret_railway_key_2024'
             token = jwt.encode({
                 'user': username,
                 'is_admin': True,
                 'exp': datetime.utcnow() + timedelta(hours=24)
-            }, os.getenv('SECRET_KEY'))
+            }, secret)
             
             connection.close()
             return jsonify({'token': token, 'is_admin': True})
@@ -178,8 +181,8 @@ def admin_login():
         return jsonify({'message': 'Invalid credentials'}), 401
     
     except Exception as e:
-        print(f"Login error: {e}")
-        return jsonify({'message': 'An error occurred during login'}), 500
+        print(f"FATAL LOGIN ERROR: {e}")
+        return jsonify({'message': f'Server Error: {str(e)}'}), 500
 
 # Stations routes
 @app.route('/api/stations', methods=['GET'])
